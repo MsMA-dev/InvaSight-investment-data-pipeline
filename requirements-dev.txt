@@ -1,0 +1,6 @@
+# For scripts/run_local.py and CI (no Airflow needed). Airflow's own
+# dependencies live in airflow/Dockerfile.
+duckdb==1.4.4
+requests
+dbt-core==1.11.*
+dbt-duckdb==1.11.0

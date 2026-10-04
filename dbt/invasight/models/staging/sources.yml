@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Landing tables, written by Airflow's load tasks exactly as the source
+      delivered the data (JSON payloads kept whole, ledger CSV columns as text).
+    database: "{{ target.database }}"
+    schema: raw
+    tables:
+      - name: metal_prices_raw
+        description: One row per metal-prices API response (JSON).
+      - name: equity_prices_raw
+        description: One row per equity-prices API response (JSON, all tickers).
+      - name: fx_rates_raw
+        description: One row per exchange-rates API response (JSON).
+      - name: ledger_transactions_raw
+        description: One row per ledger transaction from the generated CSV batches.

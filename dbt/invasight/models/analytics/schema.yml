@@ -1,0 +1,226 @@
+version: 2
+
+models:
+  # =========================
+  # DIMENSIONS
+  # =========================
+
+  - name: dim_asset
+    description: Equities, ETFs and precious metals.
+    columns:
+      - name: asset_key
+        description: Primary key (MD5 of ticker).
+        data_tests: [not_null, unique]
+      - name: ticker
+        description: Ticker or metal symbol.
+        data_tests: [not_null, unique]
+      - name: asset_name
+        description: Display name (currently the ticker).
+      - name: asset_type
+        description: Asset class.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['EQUITY', 'ETF', 'METAL']
+      - name: sector
+        description: Sector or category.
+
+  - name: dim_client
+    description: One row per client.
+    columns:
+      - name: client_key
+        description: Primary key (MD5 of client_id).
+        data_tests: [not_null, unique]
+      - name: client_id
+        description: Business identifier for the client.
+        data_tests: [not_null, unique]
+      - name: client_name
+        description: Display name.
+
+  - name: dim_currency
+    description: Currencies used by the ledger and FX data.
+    columns:
+      - name: currency_key
+        description: Primary key (MD5 of currency_code).
+        data_tests: [not_null, unique]
+      - name: currency_code
+        description: ISO 4217 currency code.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['CHF', 'EUR', 'GBP', 'SAR', 'USD']
+
+  - name: dim_date
+    description: One row per calendar date seen in any source.
+    columns:
+      - name: date_key
+        description: Primary key, YYYYMMDD integer.
+        data_tests: [not_null, unique]
+      - name: full_date
+        description: Calendar date.
+      - name: year
+      - name: quarter
+      - name: month
+      - name: day
+
+  - name: dim_source
+    description: Internal and external data providers.
+    columns:
+      - name: source_key
+        description: Primary key (MD5 of source_name).
+        data_tests: [not_null, unique]
+      - name: source_name
+        description: Name of the data source.
+      - name: source_type
+        description: Internal or External.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['External', 'Internal']
+
+  # =========================
+  # FACTS
+  # =========================
+
+  - name: fact_holdings
+    description: >
+      One row per ledger transaction (BUY or SELL) with quantity, price, fees,
+      the FX rate used and the value in SAR.
+    columns:
+      - name: holding_key
+        description: Primary key (MD5 of transaction_id).
+        data_tests: [not_null, unique]
+      - name: date_key
+        description: Foreign key to dim_date.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: asset_key
+        description: Foreign key to dim_asset.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_asset')
+                field: asset_key
+      - name: client_key
+        description: Foreign key to dim_client.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_client')
+                field: client_key
+      - name: currency_key
+        description: Foreign key to dim_currency.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_currency')
+                field: currency_key
+      - name: transaction_type
+        description: BUY or SELL.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['BUY', 'SELL']
+      - name: quantity
+        description: Units traded (always positive).
+      - name: signed_quantity
+        description: Quantity, negative for SELL.
+      - name: price
+        description: Price in the transaction currency.
+      - name: exchange_rate
+        description: SAR per unit of transaction currency, as of fx_rate_date.
+      - name: fx_rate_date
+        description: Date of the FX rate used (latest on or before the transaction date).
+      - name: fees
+        description: Transaction fees.
+      - name: transaction_value
+        description: quantity * price, in the transaction currency.
+      - name: value_sar
+        description: Transaction value in SAR.
+
+  - name: fact_market_prices
+    description: Asset prices by date and source, with SAR-normalised values.
+    columns:
+      - name: market_price_key
+        description: Surrogate key of asset, date and source.
+        data_tests: [not_null, unique]
+      - name: date_key
+        description: Foreign key to dim_date.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: asset_key
+        description: Foreign key to dim_asset.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_asset')
+                field: asset_key
+      - name: currency_key
+        description: Foreign key to dim_currency.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_currency')
+                field: currency_key
+      - name: source_key
+        description: Foreign key to dim_source.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_source')
+                field: source_key
+      - name: price
+        description: Close price in USD.
+      - name: exchange_rate
+        description: SAR per USD used for conversion.
+      - name: price_sar
+        description: Price in SAR.
+
+  - name: fact_daily_portfolio_summary
+    description: One row per client and date with investment, value, fees, return and P&L in SAR.
+    columns:
+      - name: portfolio_summary_key
+        description: Surrogate key of client and date.
+        data_tests: [not_null, unique]
+      - name: date_key
+        description: Foreign key to dim_date.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: client_key
+        description: Foreign key to dim_client.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_client')
+                field: client_key
+      - name: total_investment
+        description: Value of the day's transactions in SAR.
+      - name: portfolio_value_sar
+        description: Positions valued at the latest market price, in SAR.
+      - name: total_fees
+        description: Fees for the day.
+      - name: daily_return
+        description: Change in portfolio value versus the client's previous day.
+      - name: pnl_sar
+        description: portfolio_value_sar - total_investment.
+      - name: currency_exposure_sar
+        description: Portfolio value exposed to FX, in SAR.

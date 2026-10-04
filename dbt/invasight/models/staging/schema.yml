@@ -1,0 +1,122 @@
+version: 2
+
+models:
+  - name: stg_precious_metals
+    description: Cleaned and deduplicated precious-metal prices parsed from the RAW JSON.
+    columns:
+      - name: success
+        description: Whether the API request succeeded.
+        data_tests:
+          - not_null
+      - name: base_currency
+        description: Base currency returned by the API.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['USD']
+      - name: api_timestamp
+        description: Timestamp returned by the API.
+        data_tests:
+          - not_null
+          - unique
+      - name: gold_usd
+        description: Gold, USD per troy ounce.
+        data_tests: [not_null]
+      - name: silver_usd
+        description: Silver, USD per troy ounce.
+        data_tests: [not_null]
+      - name: platinum_usd
+        description: Platinum, USD per troy ounce.
+        data_tests: [not_null]
+      - name: palladium_usd
+        description: Palladium, USD per troy ounce.
+        data_tests: [not_null]
+      - name: file_name
+        description: Landing-zone path of the source file.
+        data_tests: [not_null]
+      - name: loaded_at
+        description: When the RAW row was loaded.
+        data_tests: [not_null]
+
+  - name: stg_equity_prices
+    description: Flattened, typed and deduplicated daily OHLCV prices.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [ticker, date]
+    columns:
+      - name: ticker
+        description: Ticker symbol.
+        data_tests: [not_null]
+      - name: date
+        description: Trading date.
+        data_tests: [not_null]
+      - name: open_price
+        description: Opening price (USD).
+        data_tests: [not_null]
+      - name: high_price
+        description: Daily high (USD).
+        data_tests: [not_null]
+      - name: low_price
+        description: Daily low (USD).
+        data_tests: [not_null]
+      - name: close_price
+        description: Closing price (USD).
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: volume
+        description: Shares traded.
+        data_tests: [not_null]
+      - name: file_name
+        description: Landing-zone path of the source file.
+        data_tests: [not_null]
+      - name: loaded_at
+        description: When the RAW row was loaded.
+        data_tests: [not_null]
+
+  - name: stg_exchange_rates
+    description: Parsed and deduplicated FX rates, one row per date, base and target currency.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [rate_date, base_currency, target_currency]
+    columns:
+      - name: rate_date
+        data_tests: [not_null]
+      - name: base_currency
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['USD', 'EUR']
+      - name: exchange_rate
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+
+  - name: stg_ledger_transactions
+    description: Typed ledger transactions.
+    columns:
+      - name: transaction_id
+        data_tests: [not_null, unique]
+      - name: transaction_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['BUY', 'SELL']
+      - name: quantity
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: transaction_date
+        data_tests: [not_null]

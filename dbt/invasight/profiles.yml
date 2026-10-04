@@ -1,0 +1,21 @@
+# No secrets live here: every value comes from the environment (.env, passed
+# in by docker-compose). `local` needs nothing; `snowflake` needs SNOWFLAKE_*.
+invasight:
+  target: "{{ env_var('DBT_TARGET', 'local') }}"
+  outputs:
+    local:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', '../../data/warehouse/invasight.duckdb') }}"
+      schema: raw
+      threads: 1
+
+    snowflake:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT', '') }}"
+      user: "{{ env_var('SNOWFLAKE_USER', '') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD', '') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', '') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'INVASIGHT_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'INVASIGHT') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'STAGING') }}"
+      threads: 4

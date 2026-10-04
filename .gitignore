@@ -1,0 +1,25 @@
+# Secrets
+.env
+*.pem
+
+# Pipeline output (regenerated on every run)
+data/landing/
+data/warehouse/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Airflow
+airflow/logs/
+airflow.db*
+airflow.cfg
+simple_auth_manager_passwords.json.generated
+
+# dbt
+dbt/**/target/
+dbt/**/logs/
+dbt/**/dbt_packages/
+dbt/**/.user.yml
