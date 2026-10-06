@@ -1,104 +1,125 @@
-# InvaSight — Multi-Cloud Automated Investment Data Pipeline
+# InvaSight
+### Multi-Cloud Automated Investment Data Pipeline
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
-![Apache Airflow](https://img.shields.io/badge/Apache_Airflow-3.0-017CEE?logo=Apache%20Airflow&logoColor=white)
-![dbt Core](https://img.shields.io/badge/dbt-Core-FF694B?logo=dbt&logoColor=white)
-![Snowflake](https://img.shields.io/badge/Snowflake-Data_Warehouse-29B5E8?logo=snowflake&logoColor=white)
-![AWS Secrets Manager](https://img.shields.io/badge/AWS-Secrets_Manager-232F3E?logo=amazon-aws&logoColor=white)
-![Azure ADLS](https://img.shields.io/badge/Azure-Blob_Storage-0089D6?logo=microsoft-azure&logoColor=white)
-![License](https://img.shields.io/badge/Status-Completed_Capstone-success)
+> **InvaSight** is an enterprise-grade investment data pipeline engineered for **wealth managers**. It seamlessly ingests multi-asset financial ledgers alongside live global market data, automatically standardizing all asset holdings and valuations into **Saudi Riyals (SAR)** within a central analytical warehouse.
 
-**InvaSight** is an enterprise-grade investment data pipeline built for **wealth managers**. It automatically ingests multi-asset financial transaction ledgers and live global market data, standardizing all holdings and valuations into **Saudi Riyals (SAR)** within a consolidated analytical warehouse.
-
-> 🎓 Built as a four-person capstone project for the **Saudi Digital Academy (SDA)** Data Engineering Bootcamp (*SDA × WeCloudData*).
+*Developed by a team of 4 as our capstone project for the Saudi Digital Academy (SDA) Data Engineering Bootcamp, in collaboration with WeCloudData.*
 
 ---
 
-## 🏗 System Architecture
-
-![InvaSight architecture diagram](docs/images/architecture.png)
-
----
-
-## ⚙️ How It Works
-
-1. **Ingest:** **Apache Airflow** orchestrates scheduled ingestion. It fetches the internal client ledger **every 45 minutes** and pulls FX rates, precious metal prices, and equity data **daily**, enforcing payload schema validation.
-2. **Land & Load:** Raw files land in **Azure Blob Storage** (or local landing storage). Runs are strictly idempotent—only new payloads for the current batch run are loaded into the warehouse, ensuring safe execution retries.
-3. **Transform & Test:** **dbt Core** parses, types, and models raw entities into a **Galaxy Schema** denominated in SAR. Automated data quality tests run instantly upon modeling; any assertion failure halts downstream deployment.
-4. **Serve:** A **Power BI** executive dashboard connects directly to Snowflake analytics views for real-time wealth oversight and asset allocation metrics.
+## Quick Links
+- [Architecture](#architecture)
+- [How It Works](#how-it-works)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started-local-development)
+- [Leadership & Contributions](#leadership--individual-contributions)
+- [Team Credits](#team--credits)
 
 ---
 
-## ✨ Key Features
+## Architecture
 
-- **Automated Airflow DAGs:** Independent, resilient DAG schedules for high-frequency internal ledgers and daily external market data APIs, complete with automated retry logic.
-- **Single Currency Standard (SAR):** Automated currency conversion applying the exact FX rate active on or preceding each transaction date.
-- **Strict Data Governance:** 13 dbt transformation models backed by **79 automated dbt data tests** verifying primary keys, referential integrity, accepted value bounds, and business logic constraints.
-- **Zero-Cloud Local Mode:** Fully containerized setup allows end-to-end execution on sample data using **DuckDB** without needing cloud accounts.
+### Pipeline Architecture
+
+![Pipeline architecture](docs/images/architecture.png)
+
+### Cloud Infrastructure
+
+![Cloud infrastructure](docs/images/cloud_infrastructure.png)
+
+1. **CI/CD Pipeline:** Code flows from GitHub via **GitHub Actions** directly into **AWS**.
+2. **Container Orchestration:** Docker images are built on an EC2 Docker engine; **Apache Airflow** runs on `k8s-master` and **dbt** executes on `k8s-worker01` inside an AWS EC2 Kubernetes cluster.
+3. **Secure Landing:** Airflow ingests market data into the **Azure Blob Storage (ADLS)** Bronze layer.
+4. **Warehouse Integration:** **Snowflake** connects to Bronze and Golden layers using short-lived Azure SAS tokens for maximum security.
 
 ---
 
-## 📊 Analytics Data Model
+## How It Works
 
-The analytical layer (`analytics`) is structured as a **Galaxy Schema** consisting of three central fact tables supported by shared dimensional views:
-
-* **Fact Tables:** `fact_holdings`, `fact_market_prices`, `fact_daily_portfolio_summary`
-* **Dimension Tables:** `dim_asset`, `dim_client`, `dim_currency`, `dim_date`, `dim_source`
-
----
-
-## 🛠 Tech Stack & Environment Specs
-
-| Architectural Layer | Cloud / Production Deployment | Local Standalone Mode (Default) |
+| Step | Action | Description |
 | :--- | :--- | :--- |
-| **Orchestration** | Apache Airflow 3 (AWS EC2 / Docker / K8s) | Apache Airflow 3 (Docker Compose) |
-| **Landing Storage** | Azure Blob Storage (ADLS Gen2) | `data/landing/` local filesystem |
-| **Data Warehouse** | Snowflake | DuckDB (`data/warehouse/invasight.duckdb`) |
-| **Data Transformation** | dbt Core + `dbt_utils` | dbt Core (`dbt-duckdb`) |
-| **Market Data APIs** | ExchangeRatesAPI, MetalPriceAPI, Alpha Vantage | Sample local mock files / APIs |
-| **BI & Analytics** | Power BI Desktop & Service | Power BI Dashboards / Query CLI |
-| **CI/CD & Security** | GitHub Actions, AWS Secrets Manager | GitHub Actions |
+| **1. Ingest** | **Airflow** | Pulls internal ledgers every 45 mins and daily FX/precious metals/equity prices with payload validation. |
+| **2. Land & Load** | **Azure ADLS** | Idempotent landing zone loading only active batch run payloads to safeguard retries. |
+| **3. Transform** | **dbt Core** | Converts raw entities into a SAR-denominated Galaxy Schema with instant QA assertions. |
+| **4. Serve** | **Power BI** | Feeds executive dashboards for wealth managers with up-to-the-minute asset allocation insights. |
 
 ---
 
-## 🚀 Getting Started (Local Development)
+## Key Features
+
+- **Resilient Dual-DAG Schedules:** Independent Airflow DAGs tailored for high-frequency internal transactions and daily market price feeds.
+- **SAR Valuation Engine:** Automated conversion using exact date-matched FX rates to consolidate global assets into Saudi Riyals.
+- **79 Automated dbt Quality Gates:** 13 dbt models protected by strict testing for primary keys, referential integrity, and business logic.
+- **Zero-Cloud Local Mode:** Run the full pipeline locally out of the box using **DuckDB** with zero cloud credentials required.
+
+---
+
+## Analytics Data Model
+
+The analytical warehouse (`analytics`) utilizes a **Galaxy Schema** architecture consisting of three core fact tables supported by shared dimensions:
+
+* **Fact Tables:** `fact_holdings` · `fact_market_prices` · `fact_daily_portfolio_summary`
+* **Dimension Tables:** `dim_asset` · `dim_client` · `dim_currency` · `dim_date` · `dim_source`
+
+---
+
+## Tech Stack
+
+| Architectural Layer | Production Cloud Environment | Local Standalone Mode (Default) |
+| :--- | :--- | :--- |
+| **Language** | Python 3.10+ | Python 3.10+ |
+| **Orchestration** | Apache Airflow 3 (AWS EC2 / K8s) | Apache Airflow 3 (Docker Compose) |
+| **Landing Storage** | Azure Blob Storage (ADLS Gen2) | `data/landing/` local directory |
+| **Data Warehouse** | Snowflake | DuckDB (`data/warehouse/invasight.duckdb`) |
+| **Transformation** | dbt Core + `dbt_utils` | dbt Core (`dbt-duckdb`) |
+| **Market Data APIs** | ExchangeRatesAPI, MetalPriceAPI, Alpha Vantage | Mock sample files / Local APIs |
+| **BI & Visualization** | Power BI Desktop & Service | Power BI / Local Warehouse CLI |
+| **CI/CD & DevSecOps** | GitHub Actions, AWS Secrets Manager | GitHub Actions |
+
+---
+
+## Getting Started (Local Development)
 
 ### Prerequisites
-* [Docker Desktop](https://www.docker.com/) or Docker Engine with `compose` v2.
+* **Docker Desktop** or **Docker Engine** with Compose v2.
 
-### Running with Docker (Recommended)
+### Option A: Running with Docker (Recommended)
 
-1. **Clone the repository and prepare environment variables:**
+1. **Clone repository and set environment configuration:**
    ```bash
    cp .env.example .env
    ```
 
-2. **Spin up local Airflow and DuckDB infrastructure:**
+2. **Spin up local Airflow & DuckDB pipeline:**
    ```bash
    docker compose up -d --build
    ```
 
 3. **Trigger Pipelines:**
-   Open `http://localhost:8080` in your browser, unpause, and trigger both `daily_market_data_dag` and `internal_ledger_dag`.
+   Navigate to `http://localhost:8080`, unpause, and run `daily_market_data_dag` and `internal_ledger_dag`.
 
-4. **Query Analytical Output:**
-   Stop the Airflow containers (to release DuckDB database write locks) and query directly:
+4. **Query Pipeline Results:**
    ```bash
+   # Stop containers to release DuckDB locks
    docker compose stop
+
+   # Query analytics tables
    duckdb data/warehouse/invasight.duckdb "SELECT * FROM analytics.fact_daily_portfolio_summary LIMIT 10;"
+
    docker compose down
    ```
 
 ---
 
-### Running Without Docker
+### Option B: Running Without Docker
 
 ```bash
-# Initialize Python Virtual Environment
+# Initialize and activate virtual environment
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install Dependencies & Execute Local Orchestration
+# Install dependencies and execute pipeline script
 pip install -r requirements-dev.txt
 python scripts/run_local.py
 ```
@@ -107,30 +128,26 @@ python scripts/run_local.py
 
 ### Switching to Cloud Production Mode
 
-To connect to live cloud services:
-1. Execute `warehouse/snowflake/setup.sql` in your Snowflake instance.
-2. Set `PIPELINE_MODE=cloud` and `MARKET_DATA_SOURCE=api` in `.env`.
-3. Fill in your AWS, Azure ADLS, and Snowflake service credentials.
+1. Run `warehouse/snowflake/setup.sql` in your Snowflake instance.
+2. Update `.env`: Set `PIPELINE_MODE=cloud` and `MARKET_DATA_SOURCE=api`.
+3. Fill in your AWS, Azure ADLS, and Snowflake credentials in `.env`.
 
 ---
 
-## 🙋‍♀️ Individual Contributions & Leadership
+## Leadership & Individual Contributions
 
-As **Project Lead** and **Data Platform Architect**, I led the technical strategy, multi-cloud deployment, and DevSecOps security stance:
+As **Project Lead & Data Platform Architect**, I led end-to-end strategy, multi-cloud implementation, and DevSecOps posture:
 
-* **Project Management & Cost Optimization:** Authored project proposals and milestone plans. Conducted API quota/cost analysis to design a zero-cost pipeline entirely within free tier limits.
-* **Multi-Cloud Infrastructure:** Architected the pipeline across AWS, Azure ADLS, and Snowflake. Successfully resolved cross-OS compatibility issues during deployment and deployed Airflow/dbt workloads on Kubernetes on AWS EC2.
-* **DevSecOps & Incident Response:** Led containment during an isolated server security event—revoked exposed credentials, migrated environment variables into **AWS Secrets Manager**, implemented short-lived **Azure SAS tokens**, and established strict `.gitignore` patterns.
-* **Transformation & Data Quality:** Configured dbt connections, engineered custom SQL macros, authored FX valuation models into SAR, and created comprehensive data quality test suites.
+* **Project Management & Cost Optimization:** Authored proposals and timelines while optimizing API request budgets to operate 100% within free tiers.
+* **Multi-Cloud Architecture:** Designed cross-cloud pipelines bridging AWS, Azure ADLS, and Snowflake; containerized Airflow/dbt on an AWS EC2 Kubernetes cluster.
+* **DevSecOps & Incident Response:** Managed threat containment during a server breach, migrated all secrets into AWS Secrets Manager, implemented short-lived Azure SAS tokens, and enforced tight Git exclusion policies.
+* **Transformation & Governance:** Configured dbt orchestration, engineered custom reusable SQL macros, built FX-to-SAR currency conversion models, and implemented 79 automated QA tests.
 
 ---
 
-## 🤝 Project Team & Credits
+## Team & Credits
 
-InvaSight was developed as a capstone collaboration by a 4-person team:
-* **Maryam Alotaibi** (*Project Lead & Data Platform Architect*)
-* **Rawan**
-* **Hanoof**
-* **Fayha'a**
-
-*Project Status: Completed.*
+* **Maryam Alotaibi**
+* **Fayhaa Alharbi**
+* **Rawan Alaklabi**
+* **Hanoof Alassiri**
