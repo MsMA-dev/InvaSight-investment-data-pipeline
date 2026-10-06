@@ -1,9 +1,9 @@
 # InvaSight
 ### Multi-Cloud Automated Investment Data Pipeline
 
-> **InvaSight** is an enterprise-grade investment data pipeline engineered for **wealth managers**. It seamlessly ingests multi-asset financial ledgers alongside live global market data, automatically standardizing all asset holdings and valuations into **Saudi Riyals (SAR)** within a central analytical warehouse.
+**InvaSight** is an enterprise-grade investment data pipeline engineered for **wealth managers**. It seamlessly ingests multi-asset financial ledgers alongside live global market data, automatically standardizing all asset holdings and valuations into **Saudi Riyals (SAR)** within a central analytical warehouse.
 
-*Developed by a team of 4 as our capstone project for the Saudi Digital Academy (SDA) Data Engineering Bootcamp, in collaboration with WeCloudData.*
+>*developed by a team of 4 as our capstone project for the Saudi Digital Academy (SDA) Data Engineering Bootcamp, in collaboration with WeCloudData.*
 
 ---
 
@@ -39,10 +39,9 @@
 
 | Step | Action | Description |
 | :--- | :--- | :--- |
-| **1. Ingest** | **Airflow** | Pulls internal ledgers every 45 mins and daily FX/precious metals/equity prices with payload validation. |
-| **2. Land & Load** | **Azure ADLS** | Idempotent landing zone loading only active batch run payloads to safeguard retries. |
-| **3. Transform** | **dbt Core** | Converts raw entities into a SAR-denominated Galaxy Schema with instant QA assertions. |
-| **4. Serve** | **Power BI** | Feeds executive dashboards for wealth managers with up-to-the-minute asset allocation insights. |
+| **1. Ingestion** | **Airflow** | Collects raw data from the internal ledger (every 45 mins) and the market APIs (daily FX, precious metals and equities), validates each payload, and lands it in the Azure ADLS Bronze layer. Loads are idempotent, so only the current run's payloads are processed and retries are safe. |
+| **2. Transformation** | **dbt Core** | Converts raw entities into a SAR-denominated Galaxy Schema with instant QA assertions. |
+| **3. Serving** | **Power BI** | Feeds executive dashboards for wealth managers with up-to-the-minute asset allocation insights. |
 
 ---
 
