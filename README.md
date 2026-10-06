@@ -135,7 +135,7 @@ python scripts/run_local.py
 
 ## Leadership & Individual Contributions
 
-As **Project Lead & Data Platform Architect**, I led end-to-end strategy, multi-cloud implementation, and DevSecOps posture:
+As **Project Lead & Data Platform Architect**, I led end-to-end strategy, multi-cloud implementation, and Security posture:
 
 * **Project Management & Cost Optimization:** Authored proposals and timelines while optimizing API request budgets to operate 100% within free tiers.
 * **Multi-Cloud Architecture:** Designed cross-cloud pipelines bridging AWS, Azure ADLS, and Snowflake; containerized Airflow/dbt on an AWS EC2 Kubernetes cluster.
