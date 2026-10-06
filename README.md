@@ -139,7 +139,7 @@ As **Project Lead & Data Platform Architect**, I led end-to-end strategy, multi-
 
 * **Project Management & Cost Optimization:** Authored proposals and timelines while optimizing API request budgets to operate 100% within free tiers.
 * **Multi-Cloud Architecture:** Designed cross-cloud pipelines bridging AWS, Azure ADLS, and Snowflake; containerized Airflow/dbt on an AWS EC2 Kubernetes cluster.
-* **DevSecOps & Incident Response:** Managed threat containment during a server breach, migrated all secrets into AWS Secrets Manager, implemented short-lived Azure SAS tokens, and enforced tight Git exclusion policies.
+* **Security & Incident Response:** Managed threat containment during a server breach, migrated all secrets into AWS Secrets Manager, implemented short-lived Azure SAS tokens, and enforced tight Git exclusion policies.
 * **Transformation & Governance:** Configured dbt orchestration, engineered custom reusable SQL macros, built FX-to-SAR currency conversion models, and implemented 79 automated QA tests.
 
 ---
